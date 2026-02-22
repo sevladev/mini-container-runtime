@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+
+	"github.com/sevladev/minic/internal/filesystem"
 )
 
 func Init(args []string) error {
@@ -20,30 +22,32 @@ func Init(args []string) error {
 		}
 	}
 
-	if err := syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
-		return fmt.Errorf("mount /proc: %w", err)
-	}
-
-	binary, err := exec_lookpath(args[0])
-	if err != nil {
-		return fmt.Errorf("exec: %w", err)
-	}
-
-	return syscall.Exec(binary, args, os.Environ())
-}
-
-func exec_lookpath(file string) (string, error) {
-	if file[0] == '/' {
-		return file, nil
-	}
-
-	paths := []string{"/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin"}
-	for _, dir := range paths {
-		path := dir + "/" + file
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
+	rootfs := os.Getenv("MINIC_ROOTFS")
+	if rootfs != "" {
+		if err := filesystem.PivotRoot(rootfs); err != nil {
+			return fmt.Errorf("pivot_root: %w", err)
+		}
+		if err := filesystem.SetupMounts(); err != nil {
+			return fmt.Errorf("setup mounts: %w", err)
 		}
 	}
 
-	return file, nil
+	binary := lookpath(args[0])
+	return syscall.Exec(binary, args, os.Environ())
+}
+
+func lookpath(file string) string {
+	if len(file) > 0 && file[0] == '/' {
+		return file
+	}
+
+	dirs := []string{"/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin"}
+	for _, dir := range dirs {
+		path := dir + "/" + file
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+
+	return file
 }
