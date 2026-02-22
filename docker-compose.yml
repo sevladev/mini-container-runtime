@@ -7,6 +7,7 @@ services:
     volumes:
       - .:/workspace
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - minic-data:/var/lib/minic
     working_dir: /workspace
     cap_add:
       - SYS_ADMIN
@@ -18,3 +19,6 @@ services:
       - /tmp
     stdin_open: true
     tty: true
+
+volumes:
+  minic-data:
