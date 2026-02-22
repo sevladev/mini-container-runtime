@@ -1,0 +1,12 @@
+FROM golang:1.23-bookworm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    iptables \
+    iproute2 \
+    bridge-utils \
+    util-linux \
+    procps \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
