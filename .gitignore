@@ -1,0 +1,6 @@
+bin/
+testdata/alpine-rootfs/
+*.exe
+*.test
+*.out
+.DS_Store
