@@ -8,21 +8,25 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/sevladev/minic/internal/cgroup"
+	"github.com/sevladev/minic/internal/filesystem"
+	"github.com/sevladev/minic/internal/image"
 	"github.com/sevladev/minic/internal/namespace"
 )
 
-const imageBaseDir = "/var/lib/minic/images"
-
 func Run(cfg Config) error {
-	rootfs, err := resolveRootfs(cfg.Image)
-	if err != nil {
-		return err
+	if !image.Exists(cfg.Image) {
+		return fmt.Errorf("image %q not found\nRun: minic pull %s", cfg.Image, cfg.Image)
 	}
 
 	containerID := generateID()
+
+	overlay, err := filesystem.SetupOverlay(containerID, image.RootfsPath(cfg.Image))
+	if err != nil {
+		return fmt.Errorf("setup overlay: %w", err)
+	}
+	defer filesystem.RemoveOverlay(overlay)
 
 	args := append([]string{"init"}, cfg.Command...)
 	cmd := exec.Command("/proc/self/exe", args...)
@@ -39,7 +43,7 @@ func Run(cfg Config) error {
 
 	cmd.Env = append(os.Environ(),
 		"MINIC_HOSTNAME="+hostname,
-		"MINIC_ROOTFS="+rootfs,
+		"MINIC_ROOTFS="+overlay.Merged,
 	)
 
 	if err := cmd.Start(); err != nil {
@@ -71,16 +75,6 @@ func Run(cfg Config) error {
 	}
 
 	return nil
-}
-
-func resolveRootfs(image string) (string, error) {
-	rootfs := filepath.Join(imageBaseDir, image, "rootfs")
-
-	if _, err := os.Stat(rootfs); os.IsNotExist(err) {
-		return "", fmt.Errorf("image %q not found at %s\nRun: minic pull %s", image, rootfs, image)
-	}
-
-	return rootfs, nil
 }
 
 func generateID() string {
