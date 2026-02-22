@@ -4,6 +4,8 @@ package container
 
 import "fmt"
 
-func Run(cfg Config) error {
-	return fmt.Errorf("minic requires Linux (namespaces, cgroups, pivot_root are Linux-only)")
-}
+var errLinux = fmt.Errorf("minic requires Linux (namespaces, cgroups, pivot_root are Linux-only)")
+
+func Run(cfg Config) error  { return errLinux }
+func Stop(id string) error  { return errLinux }
+func Remove(id string) error { return errLinux }
