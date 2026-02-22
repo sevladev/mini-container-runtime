@@ -1,11 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/sevladev/minic/internal/cli"
 )
 
 func main() {
-	fmt.Println("minic - mini container runtime")
-	os.Exit(0)
+	if err := cli.NewRootCmd().Execute(); err != nil {
+		os.Exit(1)
+	}
 }
