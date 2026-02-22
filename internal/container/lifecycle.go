@@ -13,6 +13,7 @@ import (
 	"github.com/sevladev/minic/internal/filesystem"
 	"github.com/sevladev/minic/internal/image"
 	"github.com/sevladev/minic/internal/namespace"
+	"github.com/sevladev/minic/internal/network"
 )
 
 func Run(cfg Config) error {
@@ -50,6 +51,18 @@ func Run(cfg Config) error {
 		return fmt.Errorf("start container: %w", err)
 	}
 
+	pid := cmd.Process.Pid
+
+	if cfg.NetMode != "none" {
+		net, err := network.Setup(containerID, pid)
+		if err != nil {
+			cmd.Process.Kill()
+			return fmt.Errorf("setup network: %w", err)
+		}
+		defer network.Cleanup(net.ContainerID)
+		fmt.Printf("Container IP: %s\n", net.IP)
+	}
+
 	hasCgroup := false
 	limits := cgroup.Limits{
 		MemoryBytes: cfg.Resources.MemoryBytes,
@@ -57,7 +70,7 @@ func Run(cfg Config) error {
 		PidsMax:     cfg.Resources.PidsMax,
 	}
 	if limits.MemoryBytes > 0 || limits.CPUQuota > 0 || limits.PidsMax > 0 {
-		if err := cgroup.Apply(containerID, cmd.Process.Pid, limits); err != nil {
+		if err := cgroup.Apply(containerID, pid, limits); err != nil {
 			cmd.Process.Kill()
 			return fmt.Errorf("apply cgroups: %w", err)
 		}
