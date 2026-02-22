@@ -21,4 +21,5 @@ type Config struct {
 	Resources ResourceLimits
 	NetMode   string
 	Volumes   []string
+	Detach    bool
 }
