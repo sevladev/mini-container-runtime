@@ -1,4 +1,5 @@
 bin/
+/minic
 testdata/alpine-rootfs/
 *.exe
 *.test
