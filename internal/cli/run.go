@@ -42,6 +42,7 @@ func newRunCmd() *cobra.Command {
 				Hostname: opts.hostname,
 				NetMode:  opts.net,
 				Volumes:  opts.volumes,
+				Detach:   opts.detach,
 				Resources: container.ResourceLimits{
 					MemoryBytes: memBytes,
 					CPUQuota:    opts.cpus,

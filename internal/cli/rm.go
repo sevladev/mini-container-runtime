@@ -1,8 +1,7 @@
 package cli
 
 import (
-	"fmt"
-
+	"github.com/sevladev/minic/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -12,8 +11,7 @@ func newRmCmd() *cobra.Command {
 		Short: "Remove a stopped container",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("rm: container=%s\n", args[0])
-			return nil
+			return container.Remove(args[0])
 		},
 	}
 }
