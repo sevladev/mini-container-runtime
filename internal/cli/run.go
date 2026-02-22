@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/sevladev/minic/internal/container"
+	"github.com/sevladev/minic/pkg/units"
 	"github.com/spf13/cobra"
 )
 
@@ -24,14 +27,26 @@ func newRunCmd() *cobra.Command {
 		Short: "Create and run a new container",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			command := args[1:]
+			var memBytes int64
+			if opts.memory != "" {
+				var err error
+				memBytes, err = units.ParseMemory(opts.memory)
+				if err != nil {
+					return fmt.Errorf("invalid --memory: %w", err)
+				}
+			}
 
 			cfg := container.Config{
 				Image:    args[0],
-				Command:  command,
+				Command:  args[1:],
 				Hostname: opts.hostname,
 				NetMode:  opts.net,
 				Volumes:  opts.volumes,
+				Resources: container.ResourceLimits{
+					MemoryBytes: memBytes,
+					CPUQuota:    opts.cpus,
+					PidsMax:     opts.pids,
+				},
 			}
 
 			return container.Run(cfg)

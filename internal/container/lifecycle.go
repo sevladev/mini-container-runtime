@@ -3,11 +3,14 @@
 package container
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 
+	"github.com/sevladev/minic/internal/cgroup"
 	"github.com/sevladev/minic/internal/namespace"
 )
 
@@ -18,6 +21,8 @@ func Run(cfg Config) error {
 	if err != nil {
 		return err
 	}
+
+	containerID := generateID()
 
 	args := append([]string{"init"}, cfg.Command...)
 	cmd := exec.Command("/proc/self/exe", args...)
@@ -37,7 +42,31 @@ func Run(cfg Config) error {
 		"MINIC_ROOTFS="+rootfs,
 	)
 
-	if err := cmd.Run(); err != nil {
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("start container: %w", err)
+	}
+
+	hasCgroup := false
+	limits := cgroup.Limits{
+		MemoryBytes: cfg.Resources.MemoryBytes,
+		CPUQuota:    cfg.Resources.CPUQuota,
+		PidsMax:     cfg.Resources.PidsMax,
+	}
+	if limits.MemoryBytes > 0 || limits.CPUQuota > 0 || limits.PidsMax > 0 {
+		if err := cgroup.Apply(containerID, cmd.Process.Pid, limits); err != nil {
+			cmd.Process.Kill()
+			return fmt.Errorf("apply cgroups: %w", err)
+		}
+		hasCgroup = true
+	}
+
+	err = cmd.Wait()
+
+	if hasCgroup {
+		cgroup.Remove(containerID)
+	}
+
+	if err != nil {
 		return fmt.Errorf("container exited: %w", err)
 	}
 
@@ -52,4 +81,10 @@ func resolveRootfs(image string) (string, error) {
 	}
 
 	return rootfs, nil
+}
+
+func generateID() string {
+	b := make([]byte, 6)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }
