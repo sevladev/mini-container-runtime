@@ -28,6 +28,11 @@ func Exists(name string) bool {
 	return err == nil
 }
 
+func HasManifest(name string) bool {
+	_, err := os.Stat(ManifestPath(name))
+	return err == nil
+}
+
 func SaveManifest(m Manifest) error {
 	data, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {

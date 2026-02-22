@@ -29,11 +29,11 @@ jobs:
         with:
           go-version: "1.25"
 
-      - name: Build
-        run: go build -o /usr/local/bin/minic ./cmd/minic
+      - name: Build and install
+        run: sudo go build -o /usr/local/bin/minic ./cmd/minic
 
       - name: Pull Alpine rootfs
-        run: sudo bash scripts/download-rootfs.sh
+        run: sudo minic pull alpine
 
       - name: E2E tests
         run: sudo go test ./tests/... -v -tags e2e -timeout 120s

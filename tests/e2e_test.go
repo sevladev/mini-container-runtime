@@ -36,8 +36,9 @@ func TestRunPidIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("run pid check failed: %s: %v", string(out), err)
 	}
-	if !strings.Contains(string(out), "1") {
-		t.Fatalf("expected PID 1 inside container, got: %s", string(out))
+	trimmed := strings.TrimSpace(string(out))
+	if trimmed != "1" {
+		t.Fatalf("expected PID 1 inside container, got: %q", trimmed)
 	}
 }
 
@@ -67,8 +68,7 @@ func TestDetachAndPs(t *testing.T) {
 	}
 
 	containerID := strings.TrimSpace(string(out))
-
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	psOut, err := exec.Command(binary, "ps").CombinedOutput()
 	if err != nil {
@@ -83,7 +83,7 @@ func TestDetachAndPs(t *testing.T) {
 		t.Fatalf("stop failed: %s: %v", string(stopOut), err)
 	}
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	rmOut, err := exec.Command(binary, "rm", containerID).CombinedOutput()
 	if err != nil {

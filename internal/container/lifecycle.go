@@ -100,20 +100,9 @@ func Run(cfg Config) error {
 	SaveState(meta)
 
 	if cfg.Detach {
+		stdoutLog.Close()
+		stderrLog.Close()
 		fmt.Printf("%s\n", containerID)
-		go func() {
-			cmd.Wait()
-			stdoutLog.Close()
-			stderrLog.Close()
-			if hasCgroup {
-				cgroup.Remove(containerID)
-			}
-			network.Cleanup(containerID)
-			filesystem.RemoveOverlay(overlay)
-			meta.Status = StateStopped
-			meta.ExitCode = cmd.ProcessState.ExitCode()
-			SaveState(meta)
-		}()
 		return nil
 	}
 
@@ -159,6 +148,9 @@ func Stop(id string) error {
 		process.Signal(syscall.SIGKILL)
 	}
 
+	network.Cleanup(meta.ID)
+	cgroup.Remove(meta.ID)
+
 	meta.Status = StateStopped
 	SaveState(meta)
 	fmt.Println(meta.ID)
@@ -175,6 +167,7 @@ func Remove(id string) error {
 		return fmt.Errorf("container %s is still running, stop it first", meta.ID)
 	}
 
+	filesystem.CleanupContainer(meta.ID)
 	RemoveState(meta.ID)
 	fmt.Println(meta.ID)
 	return nil

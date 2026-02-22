@@ -24,6 +24,9 @@ func Init(args []string) error {
 
 	rootfs := os.Getenv("MINIC_ROOTFS")
 	if rootfs != "" {
+		if err := syscall.Mount("", "/", "", syscall.MS_REC|syscall.MS_PRIVATE, ""); err != nil {
+			return fmt.Errorf("make root private: %w", err)
+		}
 		if err := filesystem.PivotRoot(rootfs); err != nil {
 			return fmt.Errorf("pivot_root: %w", err)
 		}

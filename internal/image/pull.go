@@ -19,7 +19,7 @@ func Pull(name string) error {
 		return fmt.Errorf("unknown image %q (available: alpine)", name)
 	}
 
-	if Exists(name) {
+	if Exists(name) && HasManifest(name) {
 		fmt.Printf("Image %q already exists\n", name)
 		return nil
 	}

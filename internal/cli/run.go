@@ -62,6 +62,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.net, "net", "bridge", "Network mode: bridge or none")
 	cmd.Flags().BoolVarP(&opts.detach, "detach", "d", false, "Run in background")
 	cmd.Flags().StringSliceVarP(&opts.volumes, "volume", "v", nil, "Bind mount (host:container)")
+	cmd.Flags().SetInterspersed(false)
 
 	return cmd
 }

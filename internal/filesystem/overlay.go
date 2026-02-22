@@ -50,3 +50,9 @@ func RemoveOverlay(dirs *OverlayDirs) error {
 	}
 	return os.RemoveAll(dirs.ContainerDir)
 }
+
+func CleanupContainer(containerID string) {
+	dir := filepath.Join(containerBaseDir, containerID)
+	merged := filepath.Join(dir, "merged")
+	syscall.Unmount(merged, syscall.MNT_DETACH)
+}

@@ -72,11 +72,7 @@ func reconcileState(m *Metadata) {
 }
 
 func isProcessAlive(pid int) bool {
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return false
-	}
-	err = proc.Signal(os.Signal(nil))
+	_, err := os.Stat(fmt.Sprintf("/proc/%d", pid))
 	return err == nil
 }
 
