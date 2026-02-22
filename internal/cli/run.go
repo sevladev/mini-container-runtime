@@ -1,8 +1,7 @@
 package cli
 
 import (
-	"fmt"
-
+	"github.com/sevladev/minic/internal/container"
 	"github.com/spf13/cobra"
 )
 
@@ -25,11 +24,17 @@ func newRunCmd() *cobra.Command {
 		Short: "Create and run a new container",
 		Args:  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			image := args[0]
 			command := args[1:]
 
-			fmt.Printf("run: image=%s command=%v opts=%+v\n", image, command, opts)
-			return nil
+			cfg := container.Config{
+				Image:    args[0],
+				Command:  command,
+				Hostname: opts.hostname,
+				NetMode:  opts.net,
+				Volumes:  opts.volumes,
+			}
+
+			return container.Run(cfg)
 		},
 	}
 
